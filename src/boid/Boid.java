@@ -26,15 +26,15 @@ import java.util.logging.Logger;
 public class Boid implements Runnable {
 
     //The current x and y location of the boid.
-    private double x, y;
+    protected double x, y;
     //The current x and y velocity of the boid.
-    private double dx, dy;
+    protected double dx, dy;
     //The current state of the boid.
-    private boolean isAlive;
+    protected boolean isAlive;
     //The array to hold the colors of each boid.
-    private Color[] colour;
+    protected Color[] colour;
     //The flock the boid are attached to.
-    private BoidFlock flock;
+    protected BoidFlock flock;
 
     //The x y dimensions of the world.
     static int WORLD_WIDTH;
@@ -102,7 +102,6 @@ public class Boid implements Runnable {
             if (i == this) {
                 //Avoid this as you can divide by zero when there is a flock size of 1
             } else {
-
                 vsX += (getPositionX() - i.getPositionX()) / sqrt(pow(getPositionX() - i.getPositionX(), 2) + pow(getPositionY() - i.getPositionY(), 2));
 
             }
@@ -231,6 +230,48 @@ public class Boid implements Runnable {
         return vaY;
     }
 
+    public void avoidRocks(List<Rock> rocks) {
+      
+        double xAvg = 0;
+        double yAvg = 0;
+
+        for (Rock r : rocks) {
+            if (r.getX() > this.x) {
+                xAvg--;
+            }
+            if (r.getX() < this.x) {
+                xAvg++;
+            }
+            if (r.getY() > this.y) {
+                yAvg++;
+            }
+            if (r.getY() < this.y) {
+                yAvg--;
+            }
+            
+
+        }
+
+        dx = this.dx - xAvg;
+        dy = this.dy - yAvg;
+
+        //Total velocity
+        double velocity = sqrt(pow(dx, 2) + pow(dy, 2));
+
+        //Slight velcoity increase to avoid flocks staying slow
+        dx = dx * 1.1;
+        dy = dy * 1.1;
+
+        //Clamped velocity
+        if (abs(velocity) > MAX_SPEED) {
+//                    System.out.println("Clamp");
+            dx = dx / velocity * MAX_SPEED;
+            dy = dy / velocity * MAX_SPEED;
+        }
+        
+        
+    }
+
     @Override
     public void run() {
 
@@ -303,51 +344,53 @@ public class Boid implements Runnable {
 
                 //Get the neighbours of current boid.
                 List<Boid> currentFlock = flock.getNeighbours(this);
+                List<Rock> currentRocks = flock.getRocks(this);
 
-                //Velocity seperation in x
-                double vsX = getvsX(currentFlock);
-                //Velocity seperation in y
-                double vsY = getvsY(currentFlock);
-                //Velocity allignment in x
-                double vaX = getvaX(currentFlock);
-                //Velocity allignment in y
-                double vaY = getvaY(currentFlock);
-                //Velocity cohesion in x
-                double vcX = getvcX(currentFlock);
-                //Velocity cohesion in y
-                double vcY = getvcY(currentFlock);
+                if (currentRocks.size() > 0) {
+                    this.avoidRocks(currentRocks);
+                } else { //Velocity seperation in x
+                    double vsX = getvsX(currentFlock);
+                    //Velocity seperation in y
+                    double vsY = getvsY(currentFlock);
+                    //Velocity allignment in x
+                    double vaX = getvaX(currentFlock);
+                    //Velocity allignment in y
+                    double vaY = getvaY(currentFlock);
+                    //Velocity cohesion in x
+                    double vcX = getvcX(currentFlock);
+                    //Velocity cohesion in y
+                    double vcY = getvcY(currentFlock);
 
-                //multiply seperation,allignment and cohesion by static fields
-                vsX = vsX * SEPARATION_WEIGHT;
-                vsY = vsY * SEPARATION_WEIGHT;
-                vaX = vaX * ALIGNMENT_WEIGHT;
-                vaY = vaY * ALIGNMENT_WEIGHT;
-                vcX = vcX * COHESION_WEIGHT;
-                vcY = vcY * COHESION_WEIGHT;
+                    //multiply seperation,allignment and cohesion by static fields
+                    vsX = vsX * SEPARATION_WEIGHT;
+                    vsY = vsY * SEPARATION_WEIGHT;
+                    vaX = vaX * ALIGNMENT_WEIGHT;
+                    vaY = vaY * ALIGNMENT_WEIGHT;
+                    vcX = vcX * COHESION_WEIGHT;
+                    vcY = vcY * COHESION_WEIGHT;
 
-                //Velocity in x and y
-                double vx = (getMovementX() + vsX + vaX + vcX);
-                double vy = (getMovementY() + vsY + vaY + vcY);
+                    //Velocity in x and y
+                    double vx = (getMovementX() + vsX + vaX + vcX);
+                    double vy = (getMovementY() + vsY + vaY + vcY);
 
-                //Total velocity
-                double velocity = sqrt(pow(vx, 2) + pow(vy, 2));
+                    //Total velocity
+                    double velocity = sqrt(pow(vx, 2) + pow(vy, 2));
 
-                //Slight velcoity increase to avoid flocks staying slow
-                vx = vx * 1.1;
-                vy = vy * 1.1;
+                    //Slight velcoity increase to avoid flocks staying slow
+                    vx = vx * 1.1;
+                    vy = vy * 1.1;
 
-                //Clamped velocity
-                if (abs(velocity) > MAX_SPEED) {
+                    //Clamped velocity
+                    if (abs(velocity) > MAX_SPEED) {
 //                    System.out.println("Clamp");
-                    vx = vx / velocity * MAX_SPEED;
-                    vy = vy / velocity * MAX_SPEED;
-                } else {
-//                    System.out.println("Non clamp");
-                }
+                        vx = vx / velocity * MAX_SPEED;
+                        vy = vy / velocity * MAX_SPEED;
+                    }
 
-                //Vfinal
-                dx = vx;
-                dy = vy;
+                    //Vfinal
+                    dx = vx;
+                    dy = vy;
+                }
 
             }
 
@@ -415,6 +458,7 @@ public class Boid implements Runnable {
             double velX = ((BOID_SIZE * getMovementX()) / (2 * speed));
             double velY = ((BOID_SIZE * getMovementY()) / (2 * speed));
             //Boid drawing
+
             Graphics2D stroke = (Graphics2D) g;
             stroke.setStroke(new BasicStroke(4));
             stroke.setColor(colour[0]);

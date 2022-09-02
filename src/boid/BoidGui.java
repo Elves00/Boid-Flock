@@ -32,6 +32,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
     private JButton addBoidButton;
     private JButton addLots;
     private JButton addRemoveButton;
+    private JButton addRock;
 
     private JLabel addCountLabel;
     private JLabel addCohesionLabel;
@@ -46,6 +47,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
 
     private BoidFlock fly;
 
+    private Rock rock;
     private DrawPanel drawPanel;
 
     private Timer timer;
@@ -55,7 +57,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
 
         //Boid flock
         this.fly = new BoidFlock();
-
+      
         //Panel for button options
         JPanel southPanel = new JPanel(new GridLayout(2, 8));
 
@@ -63,6 +65,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
         this.addBoidButton = new JButton("Add Boid");
         this.addLots = new JButton("Add Lots");
         this.addRemoveButton = new JButton("Remove");
+        this.addRock = new JButton("Add Rock");
 
         //SETS BOID VALUES TO A STARTING FLOCKING BEHAVIOUR
         Boid.RADIUS_DETECTION = 50;
@@ -85,6 +88,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
         southPanel.add(this.addRadiusLabel);
 
         //Adds button to bottom panel
+        southPanel.add(this.addRock);
         southPanel.add(this.addBoidButton);
         southPanel.add(this.addLots);
         southPanel.add(this.addRemoveButton);
@@ -112,6 +116,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
         southPanel.add(new JLabel(""));
 
         //button listeners
+        addRock.addActionListener(this);
         addBoidButton.addActionListener(this);
         addLots.addActionListener(this);
         addRemoveButton.addActionListener(this);
@@ -133,6 +138,13 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
 
         Object source = ae.getSource();
 
+        if(source== addRock){
+            //Create rock
+            Rock rock = new Rock();
+            Thread thread = new Thread(rock);
+            thread.start();
+            fly.addRock(rock);
+        }
         if (source == addBoidButton) {
             //Create Boid
             Boid arrow = new Boid(fly);
@@ -216,9 +228,11 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
             super.paintComponent(g);
             Boid.WORLD_WIDTH = getWidth();
             Boid.WORLD_HEIGHT = getHeight();
-
+            Rock.WORLD_WIDTH=getWidth();
+            Rock.WORLD_HEIGHT=getHeight();
             //Draw it.
             fly.drawBoids(g);
+            fly.drawRocks(g);
 
         }
     }

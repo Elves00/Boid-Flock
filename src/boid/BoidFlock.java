@@ -19,15 +19,22 @@ import java.util.LinkedList;
 public class BoidFlock {
 
     private List<Boid> boids;
-
+    private List<Rock> rocks;
+    
     public BoidFlock() {
         //Using a array list as we want to access each boid within multiple times but only add or remove from this whole list infrequintly
         this.boids = new ArrayList();
+        this.rocks=new ArrayList();
     }
 
     //Adds a boid 
     public synchronized void addBoid(Boid boid) {
         this.boids.add(boid);
+    }
+    
+    //Adding a rock for boids to avoid
+    public void addRock(Rock rock){
+        this.rocks.add(rock);
     }
 
     /**
@@ -64,6 +71,29 @@ public class BoidFlock {
             }
 
         }
+        
+        return newFlock;
+
+    }
+    
+    public synchronized List<Rock> getRocks(Boid boid)
+    {
+      
+         double distance;
+        //Using a linked list here as we are adding and removing frequently
+        List<Rock> newFlock = new LinkedList();
+
+        for (Rock i : rocks) {
+            //Distance between two boids
+            distance = sqrt((pow(boid.getPositionX() - i.getX(), 2)) + (pow(boid.getPositionY() - i.getY(), 2)));
+
+            //If the boid is close to the neighboor it gets added to boid
+            if (distance <= boid.RADIUS_DETECTION) {
+                newFlock.add(i);
+            }
+
+        }
+        
         return newFlock;
 
     }
@@ -82,6 +112,13 @@ public class BoidFlock {
         //Draw all boids
         for (Boid i : boids) {
             i.draw(g);
+        }
+    }
+    
+    public void drawRocks(Graphics g){
+        for(Rock r:rocks)
+        {
+            r.draw(g);
         }
     }
 }
