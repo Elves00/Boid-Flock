@@ -25,7 +25,8 @@ public class Rock implements Runnable {
     //Width and heigh
     private int x;
     private int y;
-    private double dx, dy;
+    public double dx, dy;
+    
 
     //The x y dimensions of the world.
     private int height;

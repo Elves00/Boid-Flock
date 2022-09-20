@@ -57,7 +57,7 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
 
         //Boid flock
         this.fly = new BoidFlock();
-      
+
         //Panel for button options
         JPanel southPanel = new JPanel(new GridLayout(2, 8));
 
@@ -74,8 +74,8 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
         Boid.ALIGNMENT_WEIGHT = 0.1f;
 
         //Labels
-        this.addCountLabel = new JLabel("Boids:" + fly.size(),JLabel.CENTER);
-       this.addCountLabel.setOpaque(true);
+        this.addCountLabel = new JLabel("Boids:" + fly.size(), JLabel.CENTER);
+        this.addCountLabel.setOpaque(true);
         this.addCohesionLabel = new JLabel("Cohesion " + Boid.COHESION_WEIGHT);
         this.addAlignmentLabel = new JLabel("Alignment: " + Boid.ALIGNMENT_WEIGHT);
         this.addSeperationLabel = new JLabel("Seperation: " + Boid.SEPARATION_WEIGHT);
@@ -138,12 +138,15 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
 
         Object source = ae.getSource();
 
-        if(source== addRock){
+        if (source == addRock) {
             //Create rock
             Rock rock = new Rock();
             Thread thread = new Thread(rock);
             thread.start();
             fly.addRock(rock);
+
+            Home home = new Home();
+            fly.addHome(home);
         }
         if (source == addBoidButton) {
             //Create Boid
@@ -228,11 +231,14 @@ public class BoidGui extends JPanel implements ActionListener, ChangeListener {
             super.paintComponent(g);
             Boid.WORLD_WIDTH = getWidth();
             Boid.WORLD_HEIGHT = getHeight();
-            Rock.WORLD_WIDTH=getWidth();
-            Rock.WORLD_HEIGHT=getHeight();
+            Rock.WORLD_WIDTH = getWidth();
+            Rock.WORLD_HEIGHT = getHeight();
+            Home.WORLD_HEIGHT = getHeight();
+            Home.WORLD_WIDTH = getWidth();
             //Draw it.
             fly.drawBoids(g);
             fly.drawRocks(g);
+            fly.drawHomes(g);
 
         }
     }

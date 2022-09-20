@@ -20,21 +20,28 @@ public class BoidFlock {
 
     private List<Boid> boids;
     private List<Rock> rocks;
-    
+    private List<Home> homes;
+
     public BoidFlock() {
         //Using a array list as we want to access each boid within multiple times but only add or remove from this whole list infrequintly
         this.boids = new ArrayList();
-        this.rocks=new ArrayList();
+        this.rocks = new ArrayList();
+        this.homes = new ArrayList();
+       
     }
 
     //Adds a boid 
     public synchronized void addBoid(Boid boid) {
         this.boids.add(boid);
     }
-    
+
     //Adding a rock for boids to avoid
-    public void addRock(Rock rock){
+    public void addRock(Rock rock) {
         this.rocks.add(rock);
+    }
+    public void addHome(Home home)
+    {
+        this.homes.add(home);
     }
 
     /**
@@ -71,15 +78,14 @@ public class BoidFlock {
             }
 
         }
-        
+
         return newFlock;
 
     }
-    
-    public synchronized List<Rock> getRocks(Boid boid)
-    {
-      
-         double distance;
+
+    public synchronized List<Rock> getRocks(Boid boid) {
+
+        double distance;
         //Using a linked list here as we are adding and removing frequently
         List<Rock> newFlock = new LinkedList();
 
@@ -93,11 +99,37 @@ public class BoidFlock {
             }
 
         }
-        
+
         return newFlock;
 
     }
 
+    /**
+     * Returns the closest home for the boid.
+     * @param boid
+     * @return 
+     */
+    public synchronized List<Home> home(Boid boid)
+    {
+         double distance;
+        //Using a linked list here as we are adding and removing frequently
+        List<Home> newFlock = new LinkedList();
+
+        for (Home i : homes) {
+            //Distance between two boids
+            distance = sqrt((pow(boid.getPositionX() - i.x, 2)) + (pow(boid.getPositionY() - i.y, 2)));
+
+            //If the boid is close to the neighboor it gets added to boid
+            if (distance <= boid.RADIUS_DETECTION) {
+                newFlock.add(i);
+            }
+
+        }
+        
+        //returns the closest home 
+        return newFlock;
+    }
+    
     /**
      * Returns the size of the boids array.
      *
@@ -114,11 +146,18 @@ public class BoidFlock {
             i.draw(g);
         }
     }
-    
-    public void drawRocks(Graphics g){
-        for(Rock r:rocks)
-        {
+
+    public void drawRocks(Graphics g) {
+        for (Rock r : rocks) {
             r.draw(g);
+        }
+    }
+    
+    public void drawHomes(Graphics g)
+    {
+        for(Home h:this.homes)
+        {
+            h.draw(g);
         }
     }
 }

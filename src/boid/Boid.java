@@ -51,11 +51,15 @@ public class Boid implements Runnable {
     //Limits how fast boids can move.
     static float MAX_SPEED = 5;
 
+    //If a boid is home
+    private boolean isHome;
+
     public Boid(BoidFlock flock) {
 
         //Random generation
         Random rand = new Random();
-
+        //If a boid is home 
+        isHome = false;
         //Boid flock
         this.flock = flock;
         flock.addBoid(this);
@@ -230,30 +234,47 @@ public class Boid implements Runnable {
         return vaY;
     }
 
-    public void avoidRocks(List<Rock> rocks) {
-      
-        double xAvg = 0;
-        double yAvg = 0;
+    /**
+     * *
+     * Gets a list of rocks and redirects a boid to avoid them
+     *
+     * @param rocks
+     */
+    public Rock closestRock(List<Rock> rocks) {
 
+        double closest = sqrt(pow(rocks.get(0).getX() - this.x, 2) + pow(rocks.get(0).getY() - this.y, 2));
+        Rock close = rocks.get(0);
         for (Rock r : rocks) {
-            if (r.getX() > this.x) {
-                xAvg--;
+            if (closest > sqrt(pow(r.getX() - this.x, 2) + pow(r.getY() - this.y, 2))) {
+                closest = sqrt(pow(r.getX() - this.x, 2) + pow(r.getY() - this.y, 2));
+                close = r;
             }
-            if (r.getX() < this.x) {
-                xAvg++;
-            }
-            if (r.getY() > this.y) {
-                yAvg++;
-            }
-            if (r.getY() < this.y) {
-                yAvg--;
-            }
-            
+        }
+        return close;
+    }
 
+    public void fleeOrHide(List<Home> house, Rock closest) {
+//        //Get the list of homes within boid range.
+//        List<Home> house = flock.home(this);
+        double close = sqrt(pow(closest.getX() - this.x, 2) + pow(closest.getY() - this.y, 2));
+        Home closestHome = null;
+
+        //Find if any are close then the closest rock
+        for (Home h : house) {
+            //If any houses are closer we will hide there
+            if (sqrt(pow(h.x - this.x, 2) + pow(h.y - this.y, 2)) < close) {
+                closestHome = h;
+                break;
+            }
         }
 
-        dx = this.dx - xAvg;
-        dy = this.dy - yAvg;
+        //Hides at the closes home if theres a home available otherwises fleas the rock
+        if (closestHome != null) {
+            this.hideHome(closestHome);
+        } else {
+            dx = this.dx - closest.dx;
+            dy = this.dy - closest.dy;
+        }
 
         //Total velocity
         double velocity = sqrt(pow(dx, 2) + pow(dy, 2));
@@ -264,12 +285,40 @@ public class Boid implements Runnable {
 
         //Clamped velocity
         if (abs(velocity) > MAX_SPEED) {
-//                    System.out.println("Clamp");
             dx = dx / velocity * MAX_SPEED;
             dy = dy / velocity * MAX_SPEED;
         }
-        
-        
+
+    }
+
+    /**
+     * Moves a board towards the closest home then hides the boid from view
+     *
+     * @param home
+     */
+    public void hideHome(Home home) {
+        if (this.x < home.x) {
+            dx++;
+        } else {
+            dx--;
+        }
+        if (this.y < home.y) {
+            dy++;
+        } else {
+            dy--;
+        }
+
+        //Checks if the boid is within the home zone
+        if (sqrt(pow(home.x - this.x, 2) + pow(home.y - this.y, 2)) < 10) {
+            isHome = true;
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Boid.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            isHome = false;
+        }
+
     }
 
     @Override
@@ -345,9 +394,10 @@ public class Boid implements Runnable {
                 //Get the neighbours of current boid.
                 List<Boid> currentFlock = flock.getNeighbours(this);
                 List<Rock> currentRocks = flock.getRocks(this);
-
+                List<Home> currentHomes = flock.home(this);
                 if (currentRocks.size() > 0) {
-                    this.avoidRocks(currentRocks);
+
+                    fleeOrHide(currentHomes,this.closestRock(currentRocks));
                 } else { //Velocity seperation in x
                     double vsX = getvsX(currentFlock);
                     //Velocity seperation in y
@@ -382,7 +432,6 @@ public class Boid implements Runnable {
 
                     //Clamped velocity
                     if (abs(velocity) > MAX_SPEED) {
-//                    System.out.println("Clamp");
                         vx = vx / velocity * MAX_SPEED;
                         vy = vy / velocity * MAX_SPEED;
                     }
@@ -451,7 +500,7 @@ public class Boid implements Runnable {
 
     public void draw(Graphics g) {
 
-        if (isAlive) {
+        if (isAlive && !isHome) {
 
             //Speed is equal sqrt(dx^2 + dy^2)
             double speed = sqrt(pow(getMovementX(), 2) + pow(getMovementY(), 2));
